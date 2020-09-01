@@ -1,21 +1,23 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Name from './components/Name'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
+import personsService from './services/persons'
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456' },
-    { name: 'Ada Lovelace', number: '39-44-5323523' },
-    { name: 'Dan Abramov', number: '12-43-234345' },
-    { name: 'Mary Poppendieck', number: '39-23-6423122' }
-  ])
+  const [persons, setPersons] = useState([])
 
   const [ newName, setNewName ] = useState('')
 
   const [newNumber, setNewNumber] = useState('')
 
   const [ filter, setFilter ] = useState('')
+
+  useEffect(()=>{
+    personsService.getAll().then((persons)=>{
+      setPersons(persons)
+    })
+  }, [])
 
   const handleNewName =(event)=>{
     console.log(event.target.value)
@@ -34,15 +36,27 @@ const App = () => {
 
   const checkInfo = (event) =>{
     event.preventDefault()
-    if(persons.find((person)=>person.name===newName)){
-      console.log("stop")
-      window.alert(`${newName} is already added to phonebook`)
+    const duplicate = persons.find((person)=>person.name===newName)
+    if(duplicate){
+      const check = window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)
+      if(check){
+        const updatedInfo ={...duplicate,number:newNumber}
+        personsService.update(updatedInfo).then(info =>{
+          setPersons(persons.map(person=> person.id === info.id ?info:person))
+        })
+      }
     }
     else{
       const personinfo={
         name: newName, number: newNumber
       }
-      setPersons(persons.concat(personinfo))
+      personsService
+        .create(personinfo)
+          .then(info=>{
+              setPersons(persons.concat(info))
+              setNewName('')
+              setNewNumber('')
+            })
     }
   }
 
@@ -60,10 +74,7 @@ const App = () => {
 
       <h3>Numbers</h3>
 
-      <ul>
-        {nametoShow.map(person=> <Name key={person.name} persons={person}/>)}
-
-      </ul>
+      <Name persons={nametoShow} setPersons={setPersons}/>
     </div>
   )
 }
