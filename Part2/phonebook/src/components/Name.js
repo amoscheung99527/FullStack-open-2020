@@ -1,7 +1,7 @@
 import React from 'react'
 import personsService from "../services/persons"
 
-const Name = ({ persons, setPersons }) => {
+const Name = ({ persons, setPersons, setErrorMessage}) => {
 
   const handleDeleteInfo = deleteInfo =>{
     const {id, name} = deleteInfo
@@ -9,6 +9,9 @@ const Name = ({ persons, setPersons }) => {
     if (popup){
       personsService.deleteinfo(id).then(data=>{
         setPersons(persons.filter(person=>person.id !== id))
+      })
+      .catch(error=>{
+        setErrorMessage(`Information of ${name} has already been removed from the server`)
       })
     }
     console.log(popup, id)
